@@ -8,6 +8,7 @@
 #include <glcore.h>
 #include <program.h>
 #include <uniforms.h>
+#include <window.h>
 
 std::string Shader::read(const char *filename ){
     std::stringbuf source;
@@ -27,6 +28,7 @@ std::string Shader::read(const char *filename ){
 
 Shader::Shader(char *filename, int nbv) {
     program = read_program(filename);
+    program_print_errors(program);
     //prepass = read_program("src/Shaders/prePass.glsl");
     glGenVertexArrays(1, &vertexArray);
 
@@ -95,10 +97,42 @@ void Shader::draw(const Orbiter& cam, GLuint texture, GLuint dbuffer) {
     glBindVertexArray(vertexArray);
     glUseProgram(program);
 
-    program_uniform(program, "projinv", cam.projection(1024, 640, 45).inverse());
-    program_uniform(program, "viewportinv", Viewport(1024, 640).inverse());
+    program_use_texture(program, "diffuse_color", 0, texture);
+    program_use_texture(program, "depth_buffer", 1, dbuffer);
+    glDrawArrays(GL_TRIANGLES, 0, nbVertex);
+}
+
+void Shader::draw(Orbiter& cam, GLuint texture, GLuint dbuffer, GLuint nBuffer) {
+    glBindVertexArray(vertexArray);
+    glUseProgram(program);
+
+    program_uniform(program, "ViewInv", cam.view().inverse());
+    program_uniform(program, "View", cam.view());
+    program_uniform(program, "ProjInv", cam.projection(window_width(), window_height(), 45).inverse());
+    program_uniform(program, "Proj", cam.projection(window_width(), window_height(), 45));
+    program_uniform(program, "ViewPortInv", Viewport(window_width(), window_height()).inverse());
 
     program_use_texture(program, "diffuse_color", 0, texture);
     program_use_texture(program, "depth_buffer", 1, dbuffer);
+    program_use_texture(program, "normal_buffer", 2, nBuffer);
+
+    glDrawArrays(GL_TRIANGLES, 0, nbVertex);
+}
+
+void Shader::draw(Orbiter& cam, GLuint texture, GLuint dbuffer, GLuint nBuffer, GLuint pBuffer) {
+    glBindVertexArray(vertexArray);
+    glUseProgram(program);
+
+    program_uniform(program, "ViewInv", cam.view().inverse());
+    program_uniform(program, "View", cam.view());
+    program_uniform(program, "ProjInv", cam.projection(window_width(), window_height(), 45).inverse());
+    program_uniform(program, "Proj", cam.projection(window_width(), window_height(), 45));
+    program_uniform(program, "ViewPortInv", Viewport(window_width(), window_height()).inverse());
+
+    program_use_texture(program, "diffuse_color", 0, texture);
+    program_use_texture(program, "depth_buffer", 1, dbuffer);
+    program_use_texture(program, "normal_buffer", 2, nBuffer);
+    program_use_texture(program, "pos_buffer", 3, pBuffer);
+
     glDrawArrays(GL_TRIANGLES, 0, nbVertex);
 }

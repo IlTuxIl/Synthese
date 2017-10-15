@@ -17,6 +17,8 @@ public:
     Shader(char* filename, int);
     void draw(const Orbiter& cam);
     void draw(const Orbiter& cam, GLuint, GLuint);
+    void draw(Orbiter& cam, GLuint, GLuint, GLuint);
+    void draw(Orbiter& cam, GLuint, GLuint, GLuint, GLuint);
     void setVertexArray(GLuint _vao);
     void setVertexArray(const std::vector<Vector>& vec);
     void setVertexArray(const float* vec, int nb);

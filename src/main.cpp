@@ -22,7 +22,10 @@ public:
     tp2(int width, int height) : App(width, height){}
 
     void initMeshBuffer(){
-        MeshData data= read_mesh_data("data/cornel/CornellBox-Sphere.obj");
+//        MeshData data= read_mesh_data("data/breakfast/breakfast_room.obj");
+//        MeshData data= read_mesh_data("data/Sponza/sponza.obj");
+        MeshData data= read_mesh_data("data/Cornell/CornellBox-Sphere.obj");
+//        MeshData data= read_mesh_data("data/Cornell/water.obj");
         // calcule l'englobant
         Point pmin, pmax;
         bounds(data, pmin, pmax);
@@ -102,7 +105,7 @@ public:
         //~ glSamplerParameterf(m_sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
 
         // creer le shader program
-        program= read_program("src/Shaders/mesh_viewer.glsl");
+        program= read_program("src/Shaders/shader1.glsl");
         program_print_errors(program);
 
         // etat openGL par defaut
@@ -157,6 +160,7 @@ public:
             //   . transformation : la matrice declaree dans le vertex shader s'appelle mvpMatrix
             program_uniform(program, "mvpMatrix", mvp);
             program_uniform(program, "mvMatrix", mv);
+            program_uniform(program, "normalMatrix", mv.normal());
 
             // . parametres "supplementaires" :
             //   . couleur des pixels, cf la declaration 'uniform vec4 color;' dans le fragment shader
@@ -186,6 +190,7 @@ public:
 #else
                 // OU : couleur de base * texture
                 program_uniform(program, "diffuse_color", material.diffuse);
+                program_uniform(program, "ns", material.ns);
 
                 // utilise une texture
                 // . selectionne l'unite de texture 0
@@ -199,6 +204,18 @@ public:
                 // . parametres de filtrage
                 glBindSampler(0, m_sampler);
 
+                // utilise une texture
+                // . selectionne l'unite de texture 0
+                glActiveTexture(GL_TEXTURE1);
+                // . selectionne la texture
+                glBindTexture(GL_TEXTURE_2D, material.ns_texture);
+                // . parametre le shader avec le numero de l'unite sur laquelle est selectionee la texture
+                location= glGetUniformLocation(program, "ns_texture");
+                glUniform1i(location, 0);
+
+                // . parametres de filtrage
+                glBindSampler(0, m_sampler);
+
                 // ou
                 // #include "uniforms.h"
                 // program_use_texture(m_program, "diffuse_texture", 0, material.diffuse_texture, m_sampler);
@@ -206,6 +223,7 @@ public:
 
                 glDrawElements(GL_TRIANGLES, m_mesh.material_groups[i].count,
                                GL_UNSIGNED_INT, m_mesh.index_buffer_offset(m_mesh.material_groups[i].first));
+                glBindSampler(0,0);
             }
 
     }
@@ -224,6 +242,9 @@ public:
                      GL_DEPTH_COMPONENT, buffSize, buffSize, 0,
                      GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
 
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
         glGenTextures(1, &tex);
         glBindTexture(GL_TEXTURE_2D, tex);
 
@@ -231,16 +252,41 @@ public:
                      GL_RGBA, buffSize, buffSize, 0,
                      GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-        // ... et tous ses mipmaps
         glGenerateMipmap(GL_TEXTURE_2D);
+
+        glGenTextures(1, &normal_buffer);
+        glBindTexture(GL_TEXTURE_2D, normal_buffer);
+
+        glTexImage2D(GL_TEXTURE_2D, 0,
+                     GL_RGB, buffSize, buffSize, 0,
+                     GL_RGB, GL_FLOAT, nullptr);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glGenTextures(1, &pos_buffer);
+        glBindTexture(GL_TEXTURE_2D, pos_buffer);
+
+        glTexImage2D(GL_TEXTURE_2D, 0,
+                     GL_RGB, buffSize, buffSize, 0,
+                     GL_RGB, GL_FLOAT, nullptr);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+//        glGenSamplers(1, &Depthsampler);
+//        glSamplerParameteri(Depthsampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//        glSamplerParameteri(Depthsampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         glGenFramebuffers(1, &frameBuffer);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, frameBuffer);
         glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex, 0);
+        glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, normal_buffer, 0);
+        glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, pos_buffer, 0);
         glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_buffer, 0);
 
-        GLenum buffers[]= { GL_COLOR_ATTACHMENT0};
-        glDrawBuffers(1, buffers);
+        GLenum buffers[]= { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
+        glDrawBuffers(3, buffers);
 
         if(glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             return -1;
@@ -262,6 +308,11 @@ public:
     }
 
     int render(){
+
+        if(key_state('r')){
+            s.program = read_program("src/Shaders/testBuffer.glsl");
+            program_print_errors(s.program);
+        }
 
         int mx, my;
         unsigned int mb= SDL_GetRelativeMouseState(&mx, &my);
@@ -309,16 +360,25 @@ public:
 
             glActiveTexture(GL_TEXTURE0 + 1);
             glBindTexture(GL_TEXTURE_2D, depth_buffer);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+
+            glActiveTexture(GL_TEXTURE0 + 2);
+            glBindTexture(GL_TEXTURE_2D, normal_buffer);
+
+            glActiveTexture(GL_TEXTURE0 + 3);
+            glBindTexture(GL_TEXTURE_2D, pos_buffer);
 
             glViewport(0, 0, window_width(), window_height());
             glClearColor(0.2f, 0.2f, 0.2f, 1.f);        // couleur par defaut de la fenetre
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            s.draw(cam, tex, depth_buffer);
+            s.draw(cam, tex, depth_buffer, normal_buffer, pos_buffer);
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, 0);
             glActiveTexture(GL_TEXTURE0 + 1);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glActiveTexture(GL_TEXTURE0 + 2);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glActiveTexture(GL_TEXTURE0 + 3);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
         return 1;
@@ -333,6 +393,9 @@ private:
     GLuint m_vertex_buffer;
     GLuint m_index_buffer;
     GLuint m_sampler;
+    GLuint normal_buffer;
+    GLuint pos_buffer;
+    GLuint Depthsampler;
     int m_vertex_count;
     int m_index_count;
 

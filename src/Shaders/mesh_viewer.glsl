@@ -16,7 +16,6 @@ out vec3 vertex_normal;
 void main( )
 {
     gl_Position= mvpMatrix * vec4(position, 1);
-    
     vertex_position= vec3(mvMatrix * vec4(position, 1));
     vertex_texcoord= texcoord;
     vertex_normal= mat3(mvMatrix) * normal;
