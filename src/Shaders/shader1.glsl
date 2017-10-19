@@ -71,9 +71,10 @@ void main(){
     float diffu = calculDiffu(vertex_position, lightPos, normal);
     color = ((diffu * 1) * DiffColor + (reflect * 0) * SpecColor);
 
-    fragment_color= vec4(pow(color.xyz, vec3(1.0 / 2, 1.0 / 2, 1.0 / 2)), 1);
+    fragment_color = vec4(pow(color.xyz, vec3(1.0 / 2, 1.0 / 2, 1.0 / 2)), 1);
     normal_color = vertex_normal;
     pos_color = vertex_position;
+
 }
 
 #endif

@@ -30,69 +30,62 @@ void main() {
 #ifdef FRAGMENT_SHADER
 
 uniform sampler2D diffuse_color;
-uniform sampler2D depth_buffer;
 uniform sampler2D normal_buffer;
 uniform sampler2D pos_buffer;
+uniform sampler2D depth_buffer;
 
 uniform mat4 View;
-uniform mat4 ViewInv;
-uniform mat4 Proj;
-uniform mat4 ProjInv;
-uniform mat4 ViewPortInv;
+uniform mat4 ViewPortProj;
 
 in vec3 lightPos;
 in vec2 vertex_texcoord;
 
 out vec4 fragment_color;
 
-vec4 RayMarch(vec3 dir, inout vec3 hitCoord){
+int maxIter = 150;
 
-    int cpt = 0;
-    int nbPas = 100;
-    float pas = 0.1;
-    float depth;
-    vec4 projectedCoord;
+int RayMarch(vec3 dir, inout vec3 cur){
 
-    dir *= pas;
-    for(int i = 0; i < nbPas; i++)
-    {
-        hitCoord += dir;
+    dir *= 10;
 
-        projectedCoord = Proj * vec4(hitCoord, 1.0);
-        projectedCoord.xy /= projectedCoord.w;
-        projectedCoord.xy = projectedCoord.xy * 0.5 + 0.5;
+    for(int pas = 0; pas < maxIter; pas++){
+        cur += dir;
 
-        depth = texture(pos_buffer, projectedCoord.xy, 2).z;
+        vec4 coor = ViewPortProj * vec4(cur, 1);
+        vec2 tmp = coor.xy/coor.w;
 
-        float dDepth = hitCoord.z - depth;
-
-        if((dir.z - dDepth) < 1.2)
-        {
-            if(dDepth <= 0.0)
-                return vec4(projectedCoord.xy, depth, 0.0);
+        if(cur.z > texelFetch(pos_buffer, ivec2(tmp), 0).z){
+            return pas;
         }
     }
-    return vec4(vertex_texcoord.xy, depth, 0.0);
+    return maxIter;
 }
 
 void main( ){
 
-    vec4 baseColor = texture(diffuse_color, vertex_texcoord);
-    float depth = texture(depth_buffer, vertex_texcoord).r;
-    vec3 normal = (texture(normal_buffer, vertex_texcoord) * View).xyz;
+    vec4 baseColor = texelFetch(diffuse_color, ivec2(gl_FragCoord.xy), 0);//texture(diffuse_color, vertex_texcoord);
+    float depth = textureLod(depth_buffer, vertex_texcoord, 0).r;
+    vec3 normal = mat3(View) * textureLod(normal_buffer, vertex_texcoord, 0).xyz;
+    vec3 orig = textureLod(pos_buffer, vertex_texcoord, 0).xyz;
 
-//    vec4 origHomo = ProjInv * ViewPortInv * vec4(gl_FragCoord.xy, 1, 1);
-//    vec3 orig = vec3(origHomo.xy / origHomo.w, depth);
-    vec3 orig = (texture(pos_buffer, vertex_texcoord)).xyz;
-    vec3 dir = normalize(reflect(normalize(orig), normalize(normal)));
+    vec3 dir = normalize(reflect(normalize(-orig), normalize(normal)));
+    vec3 reflectCoord = orig;
 
-    vec4 coords = RayMarch(dir, orig);
+    int pas = RayMarch(dir, reflectCoord);
+    if(depth < 1 && pas != maxIter){
 
-    //fragment_color = vec4(baseColor.rgb + 0.3 * texture(diffuse_color, coords.xy).rgb, 1);//vec4(orig.rgb, 1);
-    if(orig.z > 1)
-        fragment_color = vec4(1);
+        vec4 coor = ViewPortProj * vec4(reflectCoord, 1);
+        vec3 tmp = coor.xyz/coor.w;
+
+        vec3 normalPoint = mat3(View) * texelFetch(normal_buffer, ivec2(tmp.xy), 0).xyz;
+        float cos_theta = max(0, dot(normalPoint, normalize(reflectCoord - orig)));
+        //fragment_color = vec4(float(pas)/float(maxIter), float(pas)/float(maxIter) ,float(pas)/float(maxIter), 1)
+        fragment_color = baseColor + texelFetch(diffuse_color, ivec2(tmp.xy), 0) * cos_theta;
+//        fragment_color = textureLod(diffuse_color, reflectCoord.xy, 0) * cos_theta;
+    }
     else
-        fragment_color = vec4(0,0,0,1);
-//    fragment_color = vec4(orig, 1);
+        fragment_color = baseColor;
+
+//    fragment_color = vec4(abs(normal), 0);
 }
 #endif

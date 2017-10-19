@@ -123,16 +123,13 @@ void Shader::draw(Orbiter& cam, GLuint texture, GLuint dbuffer, GLuint nBuffer, 
     glBindVertexArray(vertexArray);
     glUseProgram(program);
 
-    program_uniform(program, "ViewInv", cam.view().inverse());
-    program_uniform(program, "View", cam.view());
-    program_uniform(program, "ProjInv", cam.projection(window_width(), window_height(), 45).inverse());
-    program_uniform(program, "Proj", cam.projection(window_width(), window_height(), 45));
-    program_uniform(program, "ViewPortInv", Viewport(window_width(), window_height()).inverse());
+    program_uniform(program, "ViewPortProj", Viewport(window_width(), window_height()) * cam.projection(window_width(), window_height(), 45));
+    program_uniform(program, "View", cam.view().normal());
 
     program_use_texture(program, "diffuse_color", 0, texture);
-    program_use_texture(program, "depth_buffer", 1, dbuffer);
-    program_use_texture(program, "normal_buffer", 2, nBuffer);
-    program_use_texture(program, "pos_buffer", 3, pBuffer);
+    program_use_texture(program, "normal_buffer", 1, nBuffer);
+    program_use_texture(program, "pos_buffer", 2, pBuffer);
+    program_use_texture(program, "depth_buffer", 3, dbuffer);
 
     glDrawArrays(GL_TRIANGLES, 0, nbVertex);
 }

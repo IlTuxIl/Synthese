@@ -22,9 +22,9 @@ public:
     tp2(int width, int height) : App(width, height){}
 
     void initMeshBuffer(){
-//        MeshData data= read_mesh_data("data/breakfast/breakfast_room.obj");
-//        MeshData data= read_mesh_data("data/Sponza/sponza.obj");
-        MeshData data= read_mesh_data("data/Cornell/CornellBox-Sphere.obj");
+//        MeshData data= read_mesh_data("data/bfroom/breakfast_room.obj");
+        MeshData data= read_mesh_data("data/sponza/sponza.obj");
+//        MeshData data= read_mesh_data("data/cornel/CornellBox-Sphere.obj");
 //        MeshData data= read_mesh_data("data/Cornell/water.obj");
         // calcule l'englobant
         Point pmin, pmax;
@@ -229,7 +229,8 @@ public:
     }
 
     int init(){
-        buffSize = 512;
+        buffSizeX = window_width();
+        buffSizeY = window_height();
         initMeshBuffer();
 //        m = read_mesh("data/cornel/CornellBox-Sphere.obj");
 //        m_color_texture = read_texture(0, "debug2x2red.png");
@@ -239,7 +240,7 @@ public:
         glBindTexture(GL_TEXTURE_2D, depth_buffer);
 
         glTexImage2D(GL_TEXTURE_2D, 0,
-                     GL_DEPTH_COMPONENT, buffSize, buffSize, 0,
+                     GL_DEPTH_COMPONENT, buffSizeX, buffSizeY, 0,
                      GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -249,7 +250,7 @@ public:
         glBindTexture(GL_TEXTURE_2D, tex);
 
         glTexImage2D(GL_TEXTURE_2D, 0,
-                     GL_RGBA, buffSize, buffSize, 0,
+                     GL_RGBA, buffSizeX, buffSizeY, 0,
                      GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -258,7 +259,7 @@ public:
         glBindTexture(GL_TEXTURE_2D, normal_buffer);
 
         glTexImage2D(GL_TEXTURE_2D, 0,
-                     GL_RGB, buffSize, buffSize, 0,
+                     GL_RGBA16F, buffSizeX, buffSizeY, 0,
                      GL_RGB, GL_FLOAT, nullptr);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -268,7 +269,7 @@ public:
         glBindTexture(GL_TEXTURE_2D, pos_buffer);
 
         glTexImage2D(GL_TEXTURE_2D, 0,
-                     GL_RGB, buffSize, buffSize, 0,
+                     GL_RGBA32F, buffSizeX, buffSizeY, 0,
                      GL_RGB, GL_FLOAT, nullptr);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -330,7 +331,7 @@ public:
             cam.translation((float) -5 / (float) window_width(), (float) 0 / (float) window_height());
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, frameBuffer);
-        glViewport(0, 0, buffSize, buffSize);
+        glViewport(0, 0, buffSizeX, buffSizeY);
         glClearColor(0.2, 0.2, 0.2, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -345,7 +346,7 @@ public:
             glClear(GL_COLOR_BUFFER_BIT);
 
             glBlitFramebuffer(
-                    0, 0, buffSize, buffSize,        // rectangle origine dans READ_FRAMEBUFFER
+                    0, 0, buffSizeX, buffSizeY,        // rectangle origine dans READ_FRAMEBUFFER
                     0, 0, window_width(), window_height(),        // rectangle destination dans DRAW_FRAMEBUFFER
                     GL_COLOR_BUFFER_BIT, GL_LINEAR);                        // ne copier que la couleur (+ interpoler)
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
@@ -354,31 +355,31 @@ public:
         else{
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-            glActiveTexture(GL_TEXTURE0 + 0);
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, tex);
             glGenerateMipmap(GL_TEXTURE_2D);
 
-            glActiveTexture(GL_TEXTURE0 + 1);
-            glBindTexture(GL_TEXTURE_2D, depth_buffer);
-
-            glActiveTexture(GL_TEXTURE0 + 2);
+            glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, normal_buffer);
 
-            glActiveTexture(GL_TEXTURE0 + 3);
+            glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, pos_buffer);
+
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, depth_buffer);
 
             glViewport(0, 0, window_width(), window_height());
             glClearColor(0.2f, 0.2f, 0.2f, 1.f);        // couleur par defaut de la fenetre
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             s.draw(cam, tex, depth_buffer, normal_buffer, pos_buffer);
-            glActiveTexture(GL_TEXTURE0 + 0);
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, 0);
-            glActiveTexture(GL_TEXTURE0 + 1);
+            glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, 0);
-            glActiveTexture(GL_TEXTURE0 + 2);
+            glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, 0);
-            glActiveTexture(GL_TEXTURE0 + 3);
+            glActiveTexture(GL_TEXTURE3);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
         return 1;
@@ -403,7 +404,9 @@ private:
     Orbiter cam;
     Shader s;
     Mesh m;
-    int buffSize;
+    int buffSizeX;
+    int buffSizeY;
+
     Player p;
 };
 
