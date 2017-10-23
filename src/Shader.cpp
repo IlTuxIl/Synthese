@@ -125,6 +125,8 @@ void Shader::draw(Orbiter& cam, GLuint texture, GLuint dbuffer, GLuint nBuffer, 
 
     program_uniform(program, "ViewPortProj", Viewport(window_width(), window_height()) * cam.projection(window_width(), window_height(), 45));
     program_uniform(program, "View", cam.view().normal());
+    program_uniform(program, "Proj", cam.projection(window_width(), window_height(), 45));
+
 
     program_use_texture(program, "diffuse_color", 0, texture);
     program_use_texture(program, "normal_buffer", 1, nBuffer);
