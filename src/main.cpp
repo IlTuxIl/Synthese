@@ -23,8 +23,8 @@ public:
 
     void initMeshBuffer(){
 //        MeshData data= read_mesh_data("data/bfroom/breakfast_room.obj");
-//        MeshData data= read_mesh_data("data/Sponza/sponza.obj");
-        MeshData data= read_mesh_data("data/Cornell/CornellBox-Sphere.obj");
+        MeshData data= read_mesh_data("data/Sponza/sponza.obj");
+//        MeshData data= read_mesh_data("data/Cornell/CornellBox-Sphere.obj");
 //        MeshData data= read_mesh_data("data/Cornell/water.obj");
         // calcule l'englobant
         Point pmin, pmax;
