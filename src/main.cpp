@@ -322,13 +322,13 @@ public:
         else if(mb & SDL_BUTTON(3))         // le bouton droit est enfonce
             cam.move(mx);
         if(key_state(SDLK_UP))         // le bouton du milieu est enfonce
-            cam.translation((float) 0 / (float) window_width(), (float) 5 / (float) window_height());
+            cam.translation((float) 0 / (float) window_width(), (float) 50 / (float) window_height());
         if(key_state(SDLK_DOWN))         // le bouton du milieu est enfonce
-            cam.translation((float) 0 / (float) window_width(), (float) -5 / (float) window_height());
+            cam.translation((float) 0 / (float) window_width(), (float) -50 / (float) window_height());
         if(key_state(SDLK_LEFT))         // le bouton du milieu est enfonce
-            cam.translation((float) 5 / (float) window_width(), (float) 0 / (float) window_height());
+            cam.translation((float) 50 / (float) window_width(), (float) 0 / (float) window_height());
         if(key_state(SDLK_RIGHT))         // le bouton du milieu est enfonce
-            cam.translation((float) -5 / (float) window_width(), (float) 0 / (float) window_height());
+            cam.translation((float) -50 / (float) window_width(), (float) 0 / (float) window_height());
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, frameBuffer);
         glViewport(0, 0, buffSizeX, buffSizeY);
