@@ -294,7 +294,7 @@ public:
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-        s = Shader("src/Shaders/testBuffer.glsl", 3);
+        s = Shader("src/Shaders/SSR.glsl", 3);
 
 //        glPointSize(20);
         glClearColor(0.2f, 0.2f, 0.2f, 1);
@@ -311,7 +311,7 @@ public:
     int render(){
 
         if(key_state('r')){
-            s.program = read_program("src/Shaders/testBuffer.glsl");
+            s.program = read_program("src/Shaders/SSR.glsl");
             program_print_errors(s.program);
         }
 
