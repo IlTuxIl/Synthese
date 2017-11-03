@@ -7,7 +7,7 @@ file( GLOB gKit_SOURCES gKit/*.cpp )
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES ${gKit_SOURCES} src/tp1.cpp src/main.cpp src/Shader.cpp src/Shader.h src/Player.cpp src/controller.cpp)
+set(SOURCE_FILES ${gKit_SOURCES} src/tp1.cpp src/main.cpp src/Shader.cpp src/Shader.h src/LoadMesh.cpp src/LoadMesh.h)
 #add_executable(Synthese ${SOURCE_FILES})
 
 find_package(OpenGL REQUIRED)

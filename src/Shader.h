@@ -22,7 +22,6 @@ public:
     void setVertexArray(GLuint _vao);
     void setVertexArray(const std::vector<Vector>& vec);
     void setVertexArray(const float* vec, int nb);
-//    GLuint prepass;
     GLuint program;
     GLuint vertexArray;
 private:

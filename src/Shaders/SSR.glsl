@@ -107,9 +107,9 @@ int RayMarch(vec3 dir, inout vec3 cur){
 
 void main( ){
 
-    vec4 baseColor = textureLod(diffuse_color, vertex_texcoord, 0);//texture(diffuse_color, vertex_texcoord);
+    vec4 baseColor = textureLod(diffuse_color, vertex_texcoord, 0);
     float depth = textureLod(depth_buffer, vertex_texcoord, 0).r;
-    vec3 normal = /*mat3(View) * */textureLod(normal_buffer, vertex_texcoord, 0).xyz;
+    vec3 normal = textureLod(normal_buffer, vertex_texcoord, 0).xyz;
     vec3 orig = textureLod(pos_buffer, vertex_texcoord, 0).xyz;
 
     vec3 dir = normalize(reflect(normalize(orig), normalize(normal)));
@@ -121,7 +121,7 @@ void main( ){
         vec4 projectedCoor = ViewPortProj * vec4(reflectCoord, 1.0);
         vec2 coor = projectedCoor.xy /= projectedCoor.w;
 
-        vec3 normalPoint = /*mat3(View) * */texelFetch(normal_buffer, ivec2(coor), 0).xyz;
+        vec3 normalPoint = texelFetch(normal_buffer, ivec2(coor), 0).xyz;
         float cos_theta = max(0, dot(normalize(normalPoint), normalize(orig - reflectCoord)));
 
         fragment_color = baseColor + (vec4(texelFetch(diffuse_color, ivec2(coor), 0).rgb, 1) * cos_theta) * 0.3;
@@ -129,10 +129,6 @@ void main( ){
     }
     else
         fragment_color = baseColor;
-//        fragment_color = vec4(0,0,0,1);
-//        fragment_color = vec4(orig.x, orig.x, orig.x, 1);
-
-//    fragment_color = vec4(orig, 1);
 
 }
 
