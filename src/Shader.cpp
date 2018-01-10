@@ -123,6 +123,7 @@ void Shader::draw(Orbiter& cam, GLuint texture, GLuint dbuffer, GLuint nBuffer, 
     glBindVertexArray(vertexArray);
     glUseProgram(program);
 
+    program_uniform(program, "invViewPortProj", Viewport(window_width(), window_height()) * cam.projection(window_width(), window_height(), 45).inverse());
     program_uniform(program, "ViewPortProj", Viewport(window_width(), window_height()) * cam.projection(window_width(), window_height(), 45));
     program_uniform(program, "View", cam.view().normal());
     program_uniform(program, "invView", cam.view().inverse());

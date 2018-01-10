@@ -40,9 +40,11 @@ in vec3 lightPos;
 
 out vec4 fragment_color;
 
-const int maxIter = 10;
+const int maxIter = 50;
 const int numBinarySearchSteps = 10;
-const int pasDiscret = 5;
+const int nbRayon = 5;
+const float or = (sqrt(5) + 1) / 2;
+const float pi = 3.14;
 
 float getViewDepth(vec3 viewCoord){
     vec4 projectedCoord = ViewPortProj * vec4(viewCoord, 1.0);
@@ -106,16 +108,16 @@ int BinarySearch(vec3 dir, inout vec3 cur){
 
 int BinarySearchDiscret(vec3 dir, inout vec3 cur){
 	float curDepth;
-	dir /= pasDiscret;
-	for(int i = 0; i < pasDiscret; i++){
+	dir /= 5;
+	for(int i = 0; i < maxIter; i++){
 
 		curDepth = texelFetch(pos_buffer, ivec2(cur.xy), 0).z;
 		if(checkSortieDiscret(cur) == 0)
 		    return 0;
-		if(cur.z >= curDepth)
+		if(cur.z > curDepth)
 			return 1;
 		else
-			cur -= dir;
+			cur -= dir * i;
 	}
 	return 1;
 }
@@ -123,7 +125,7 @@ int BinarySearchDiscret(vec3 dir, inout vec3 cur){
 int RayMarch(vec3 dir, inout vec3 cur){
 
     dir *= 0.1;
-  
+
     float baseDepth = getDepth(cur);
 
     for(int pas = 0; pas < maxIter; pas++){
@@ -158,8 +160,8 @@ vec3 rayMarchDiscret(vec3 orig, vec3 end){
         dir.xyz /= dir.y;
     }
 
-    n /= pasDiscret;
-    dir *= pasDiscret;
+    n /= 5;
+    dir *= 5;
 
 //    fragment_color = vec4(abs(dir.xy), 0, 1);
 
@@ -190,6 +192,12 @@ vec3 rayMarchDiscret(vec3 orig, vec3 end){
     return vec3(0);
 }
 
+vec3 getAngleFibo(int i){
+    float angle = 1 - (2*i+1) / (2 * nbRayon);
+
+    return vec3(cos(or) * sin(angle), sin(or) * sin(angle), cos(angle));
+}
+
 void main( ){
 
     vec4 baseColor = texelFetch(diffuse_color, ivec2(gl_FragCoord.xy), 0);
@@ -197,29 +205,12 @@ void main( ){
     vec3 normal = texelFetch(normal_buffer, ivec2(gl_FragCoord.xy), 0).xyz;
     vec3 orig = texelFetch(pos_buffer, ivec2(gl_FragCoord.xy), 0).xyz;
 
+    for(int i = 0; i < nbRayon; i++){
+        vec3 dir = getAngleFibo(i);
+    }
+
     vec3 dir = normalize(reflect(normalize(orig), normalize(normal)));
     vec3 reflectCoord = orig;
-
-
-//    vec3 endDiscret;
-//    vec3 origDiscret = projDroite(reflectCoord, reflectCoord + (dir * max(0.1, -orig.z)), endDiscret);
-//
-//    vec3 hitCoord = rayMarchDiscret(origDiscret, endDiscret);
-//    if(hitCoord != vec3(0)){
-//
-//        vec3 camHitCoord = mat3(invViewPortProj) * hitCoord;
-////        vec3 camHitCoord = camHitCoordtmp.xyz/camHitCoordtmp.w;
-//
-//        vec3 normalPoint = texelFetch(normal_buffer, ivec2(hitCoord.xy), 0).xyz;
-//        float cos_theta = max(0, dot(normalize(normalPoint), normalize(orig - camHitCoord)));
-//        fragment_color = baseColor + (vec4(texelFetch(diffuse_color, ivec2(hitCoord.xy), 0).rgb, 0)) * 0.3;
-////        fragment_color = vec4(abs(normalize(hitCoord.z)), 0,0,1);
-//    }
-//    else{
-//        fragment_color = baseColor;
-////        fragment_color = vec4(0,0,0,1);
-//    }
-
 
     int pas = RayMarch(dir * max(0.1, -orig.z), reflectCoord);
     if(depth < 1 && pas != maxIter){
